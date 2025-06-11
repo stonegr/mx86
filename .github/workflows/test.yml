@@ -1,0 +1,36 @@
+name: Test
+
+on:
+  repository_dispatch:
+  workflow_dispatch:
+
+permissions:
+  contents: write  # 写入仓库内容
+  pull-requests: write  # 创建/修改 PR
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - name: Initialization environment
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        sudo mkdir -p /mnt/workdir
+        sudo chown $USER:$GROUPS /mnt/workdir
+
+    - name: Clone source code
+      working-directory: /mnt/workdir
+      run: |
+        df -hT $PWD
+        git clone https://github.com/coolsnowwolf/lede -b master openwrt
+        ln -sf /mnt/workdir/openwrt $GITHUB_WORKSPACE/openwrt
+
+    - name: SSH connection to Actions
+      uses: P3TERX/ssh2actions@v1.0.0
+      if: steps.organize.outputs.status != 'success'
+      env:
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        
